@@ -1,11 +1,21 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client";
 import { ADD_PROFILE } from "../../utils/mutations";
+import { QUERY_PROFILES } from "../../utils/queries";
 
 const ProfileForm = () => {
   const [name, setName] = useState("");
 
-  const [addProfile, { error }] = useMutation(ADD_PROFILE);
+  const [addProfile, { error }] = useMutation(ADD_PROFILE, {
+    update(cache, { data: { addProfile } }) {
+      const { profiles } = cache.readQuery({ query: QUERY_PROFILES });
+
+      cache.writeQuery({
+        query: QUERY_PROFILES,
+        data: { profiles: [...profiles, addProfile] },
+      });
+    },
+  });
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
@@ -15,7 +25,7 @@ const ProfileForm = () => {
         variables: { name },
       });
 
-      window.location.reload();
+      setName('')
     } catch (err) {
       console.error(err);
     }
