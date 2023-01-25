@@ -1,4 +1,5 @@
-const { Schema, model } = require('mongoose');
+const { Schema, model } = require("mongoose");
+const bcrypt = require("bcrypt");
 
 const profileSchema = new Schema({
   name: {
@@ -6,6 +7,17 @@ const profileSchema = new Schema({
     required: true,
     unique: true,
     trim: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [/.+@.+\..+/, "Must match an email address!"],
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 5,
   },
   skills: [
     {
@@ -15,6 +27,18 @@ const profileSchema = new Schema({
   ],
 });
 
-const Profile = model('Profile', profileSchema);
+profileSchema.pre("save", async function (next) {
+  if (this.isNew || this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+
+  next();
+});
+
+profileSchema.methods.isCorrectPassword = async function (password) {
+  return bcrypt.compare(password, this.password);
+};
+
+const Profile = model("Profile", profileSchema);
 
 module.exports = Profile;
