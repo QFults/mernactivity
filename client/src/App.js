@@ -1,57 +1,16 @@
-import {
-  ApolloClient,
-  InMemoryCache,
-  ApolloProvider,
-  createHttpLink,
-} from "@apollo/client";
-import { setContext } from "@apollo/client/link/context";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import React, { useEffect } from 'react';
+import ThemeComponent from './components/ThemeComponent';
+// Importing our theme provider which will make our global state available to child components
+import ThemeProvider from './utils/ThemeContext';
 
-import Profile from "./pages/Profile";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import SignUp from "./pages/SignUp";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+export default function App() {
+  useEffect(() => {
+    document.title = 'Module 22.1: Consumers';
+  }, []);
 
-const httpLink = createHttpLink({
-  uri: "/graphql",
-});
-
-const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem("id_token");
-  return {
-    headers: {
-      ...headers,
-      authorization: token ? `Bearer ${token}` : "",
-    },
-  };
-});
-
-const client = new ApolloClient({
-  link: authLink.concat(httpLink),
-  cache: new InMemoryCache(),
-});
-
-function App() {
   return (
-    <ApolloProvider client={client}>
-      <Router>
-        <div className="flex-column justify-flex-start min-100-vh">
-          <Header />
-          <div className="container">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/profiles/:profileId" element={<Profile />} />
-            </Routes>
-          </div>
-          <Footer />
-        </div>
-      </Router>
-    </ApolloProvider>
+    <ThemeProvider>
+      <ThemeComponent />
+    </ThemeProvider>
   );
 }
-
-export default App;
