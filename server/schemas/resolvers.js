@@ -11,6 +11,12 @@ const resolvers = {
     profile: async (parent, { profileId }) => {
       return Profile.findOne({ _id: profileId });
     },
+    me: async (parent, args, context) => {
+      if (context.user) {
+        return Profile.findOne({ _id: context.user._id });
+      }
+      throw new AuthenticationError("You need to be logged in!");
+    },
   },
 
   Mutation: {
@@ -23,39 +29,51 @@ const resolvers = {
       const profile = await Profile.findOne({ email });
 
       if (!profile) {
-        throw new AuthenticationError('No profile with this email found!')
+        throw new AuthenticationError("No profile with this email found!");
       }
 
-      const correctPw = await profile.isCorrectPassword(password)
+      const correctPw = await profile.isCorrectPassword(password);
 
       if (!correctPw) {
-        throw new AuthenticationError('Incorrect password!')
+        throw new AuthenticationError("Incorrect password!");
       }
 
-      const token = signToken(profile)
-      return { token, profile }
+      const token = signToken(profile);
+      return { token, profile };
     },
-    addSkill: async (parent, { profileId, skill }) => {
-      return Profile.findOneAndUpdate(
-        { _id: profileId },
-        {
-          $addToSet: { skills: skill },
-        },
-        {
-          new: true,
-          runValidators: true,
-        }
-      );
+    addSkill: async (parent, { profileId, skill }, context) => {
+      if (context.user) {
+        return Profile.findOneAndUpdate(
+          { _id: profileId },
+          {
+            $addToSet: { skills: skill },
+          },
+          {
+            new: true,
+            runValidators: true,
+          }
+        );
+      }
+
+      throw new AuthenticationError("You need to be logged in!");
     },
-    removeProfile: async (parent, { profileId }) => {
-      return Profile.findOneAndDelete({ _id: profileId });
+    removeProfile: async (parent, { profileId }, context) => {
+      if (context.user) {
+        return Profile.findOneAndDelete({ _id: profileId });
+      }
+
+      throw new AuthenticationError("You need to be logged in!");
     },
-    removeSkill: async (parent, { profileId, skill }) => {
-      return Profile.findOneAndUpdate(
-        { _id: profileId },
-        { $pull: { skills: skill } },
-        { new: true }
-      );
+    removeSkill: async (parent, { profileId, skill }, context) => {
+      if (context.user) {
+        return Profile.findOneAndUpdate(
+          { _id: profileId },
+          { $pull: { skills: skill } },
+          { new: true }
+        );
+      }
+
+      throw new AuthenticationError("You need to be logged in!");
     },
   },
 };
